@@ -1,5 +1,6 @@
 from sklearn.impute import KNNImputer
 from utils import *
+import matplotlib.pyplot as plt
 
 
 def knn_impute_by_user(matrix, valid_data, k):
@@ -37,7 +38,16 @@ def knn_impute_by_item(matrix, valid_data, k):
     # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    acc = None
+    # Transpose the sparse matrix to use questions as the observations
+    question_matrix = matrix.T
+
+    nbrs = KNNImputer(n_neighbors=k)
+    # We use NaN-Euclidean distance measure.
+    mat = nbrs.fit_transform(question_matrix)
+
+    acc = sparse_matrix_evaluate(valid_data, mat.T)
+
+    print("Validation Accuracy: {}".format(acc))
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -60,7 +70,59 @@ def main():
     # the best performance and report the test accuracy with the        #
     # chosen k*.                                                        #
     #####################################################################
-    pass
+    k_values = (1, 6, 11, 16, 21, 26)
+
+    # # User-based collaborative filtering
+    # valid_acc_set = []
+    #
+    # # Compute validation accuracy for each k
+    # for i in range(len(k_values)):
+    #     k = k_values[i]
+    #     acc_k = knn_impute_by_user(sparse_matrix, val_data, k)
+    #     valid_acc_set.append(acc_k)
+    #
+    # # Create plot
+    # plt.plot(k_values, valid_acc_set, color="navy")
+    # plt.xlabel("k - Number of Nearest Neighbours")
+    # plt.ylabel("Accuracy Score")
+    # plt.tight_layout()
+    # plt.show()
+    #
+    # # k=11 has the best validation accuracy
+    # k_star = 11
+    #
+    # # Find test accuracy for k*=11
+    # nbrs = KNNImputer(n_neighbors=k_star)
+    # mat = nbrs.fit_transform(sparse_matrix)
+    # acc_k_star = sparse_matrix_evaluate(test_data, mat)
+    # print("Test Accuracy with k*: {}".format(acc_k_star))
+
+    # Item-based collaborative filtering
+    valid_acc_set1 = []
+
+    # Compute validation accuracy for each k
+    for i in range(len(k_values)):
+        k = k_values[i]
+        acc_k = knn_impute_by_item(sparse_matrix, val_data, k)
+        valid_acc_set1.append(acc_k)
+
+    # Create plot
+    plt.plot(k_values, valid_acc_set1, color="orange")
+    plt.xlabel("k - Number of Nearest Neighbours")
+    plt.ylabel("Accuracy Score")
+    plt.tight_layout()
+    plt.show()
+
+    # k=21 has the best validation accuracy
+    k_star1 = 21
+
+    # Find test accuracy for k*=21
+    nbrs = KNNImputer(n_neighbors=k_star1)
+    mat = nbrs.fit_transform(sparse_matrix.T)
+    acc_k_star = sparse_matrix_evaluate(test_data, mat.T)
+
+    print("Test Accuracy with k*: {}".format(acc_k_star))
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -68,3 +130,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
