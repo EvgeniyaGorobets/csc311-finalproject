@@ -72,30 +72,30 @@ def main():
     #####################################################################
     k_values = (1, 6, 11, 16, 21, 26)
 
-    # # User-based collaborative filtering
-    # valid_acc_set = []
-    #
-    # # Compute validation accuracy for each k
-    # for i in range(len(k_values)):
-    #     k = k_values[i]
-    #     acc_k = knn_impute_by_user(sparse_matrix, val_data, k)
-    #     valid_acc_set.append(acc_k)
-    #
-    # # Create plot
-    # plt.plot(k_values, valid_acc_set, color="navy")
-    # plt.xlabel("k - Number of Nearest Neighbours")
-    # plt.ylabel("Accuracy Score")
-    # plt.tight_layout()
-    # plt.show()
-    #
-    # # k=11 has the best validation accuracy
-    # k_star = 11
-    #
-    # # Find test accuracy for k*=11
-    # nbrs = KNNImputer(n_neighbors=k_star)
-    # mat = nbrs.fit_transform(sparse_matrix)
-    # acc_k_star = sparse_matrix_evaluate(test_data, mat)
-    # print("Test Accuracy with k*: {}".format(acc_k_star))
+    # User-based collaborative filtering
+    valid_acc_set = []
+
+    # Compute validation accuracy for each k
+    for i in range(len(k_values)):
+        k = k_values[i]
+        acc_k = knn_impute_by_user(sparse_matrix, val_data, k)
+        valid_acc_set.append(acc_k)
+
+    # Create plot
+    plt.plot(k_values, valid_acc_set, color="navy")
+    plt.xlabel("k - Number of Nearest Neighbours")
+    plt.ylabel("Accuracy Score")
+    plt.tight_layout()
+    plt.show()
+
+    # k=11 has the best validation accuracy
+    k_star = 11
+
+    # Find test accuracy for k*=11
+    nbrs = KNNImputer(n_neighbors=k_star)
+    mat = nbrs.fit_transform(sparse_matrix)
+    acc_k_star = sparse_matrix_evaluate(test_data, mat)
+    print("Test Accuracy with k*: {}".format(acc_k_star))
 
     # Item-based collaborative filtering
     valid_acc_set1 = []
