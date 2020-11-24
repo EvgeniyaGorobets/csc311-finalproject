@@ -1,4 +1,12 @@
-from utils import *
+# TODO figure out a better way to do this
+if __package__ is None:
+    import sys
+    from os import path
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+    from utils import *
+else:
+    from ..utils import *
+
 
 import numpy as np
 
@@ -114,9 +122,10 @@ def irt(data, val_data, lr, iterations):
     :param iterations: int
     :return: (theta, beta, val_acc_lst)
     """
-    # TODO: Initialize theta and beta. (see if this is the best initialization!)
-    theta = np.zeros(data.shape[0])
-    beta = np.zeros(data.shape[1])
+    # TODO: Initialize theta and beta. 
+    # TODO -- (see if this is the best initialization!)
+    theta = np.zeros(len(np.unique(data['user_id'])))
+    beta = np.zeros(len(np.unique(data['question_id'])))
 
     val_acc_lst = []
 
@@ -162,7 +171,12 @@ def main():
     # Tune learning rate and number of iterations. With the implemented #
     # code, report the validation and test accuracy.                    #
     #####################################################################
-    pass
+    
+    for lr in [0.05]: #[0.001, 0.005, 0.01, 0.05, 0.1, 0.5]:
+        for iterations in [100]: #[50, 100, 250, 500, 750, 1000]:
+            theta, beta, val_acc_lst = irt(train_data, val_data, lr, iterations)
+
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
