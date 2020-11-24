@@ -9,6 +9,18 @@ def sigmoid(x):
     return np.exp(x) / (1 + np.exp(x))
 
 
+def likelihoods(data, theta, beta):
+    # Build two vectors, representing theta_i and beta_j for each
+    # user-question (i,  j) pair in the dictionary
+    thetas = np.array(theta[data['user_id']])
+    betas = np.array(beta[data['question_id']])
+    
+    # Compute sigmoid of each theta_i, beta_j pair
+    likelihoods = sigmoid(thetas - betas)
+    
+    return likelihoods
+
+
 def neg_log_likelihood(data, theta, beta):
     """ Compute the negative log-likelihood.
 
@@ -24,7 +36,21 @@ def neg_log_likelihood(data, theta, beta):
     # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    log_lklihood = 0.
+
+    # TODO - add clarifying comment
+    lklihoods = likelihoods(data, theta, beta)
+
+    # These are the targets
+    targets = np.array(data['is_correct'])
+
+    # Compute log likelihood for each (i,j) pair
+    log_lklihoods = np.multiply(targets, np.log(
+        lklihoods)) + np.multiply(1-targets, np.log(1-lklihoods))
+    # need to test out numeric stability
+    # log function may freak if exp(theta_i - beta_j) is close to 0
+
+    log_lklihood = log_lklihoods.sum()
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -52,7 +78,23 @@ def update_theta_beta(data, lr, theta, beta):
     # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    pass
+    
+    # Update theta
+    lklihoods = likelihoods(data, theta, beta)
+    # Subtract lklihoods from targets
+    partials = np.array(data['is_correct']) - lklihoods
+    # Group by i (user_id) and sum
+    theta = theta - lr * np.bincount(data['user_id'], weights=partials)
+
+    # are more steps needed here?
+
+    # Update beta using new theta?
+    lklihoods = likelihoods(data, theta, beta)
+    # Subtract targets from lklihoods
+    partials = lklihoods - np.array(data['is_correct'])
+    # Group by j (question_id) and sum
+    beta = beta - lr * np.bincount(data['question_id'], weights=partials)
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -72,9 +114,9 @@ def irt(data, val_data, lr, iterations):
     :param iterations: int
     :return: (theta, beta, val_acc_lst)
     """
-    # TODO: Initialize theta and beta.
-    theta = None
-    beta = None
+    # TODO: Initialize theta and beta. (see if this is the best initialization!)
+    theta = np.zeros(data.shape[0])
+    beta = np.zeros(data.shape[1])
 
     val_acc_lst = []
 
@@ -105,7 +147,7 @@ def evaluate(data, theta, beta):
         p_a = sigmoid(x)
         pred.append(p_a >= 0.5)
     return np.sum((data["is_correct"] == np.array(pred))) \
-           / len(data["is_correct"])
+        / len(data["is_correct"])
 
 
 def main():
