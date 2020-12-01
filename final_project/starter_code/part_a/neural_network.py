@@ -9,8 +9,10 @@ import torch.utils.data
 import numpy as np
 import torch
 
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-def load_data(base_path="../data"):
+def load_data(base_path="data"):
     """ Load the data in PyTorch Tensor.
 
     :return: (zero_train_matrix, train_data, valid_data, test_data)
@@ -70,7 +72,12 @@ class AutoEncoder(nn.Module):
         # Implement the function as described in the docstring.             #
         # Use sigmoid activations for f and g.                              #
         #####################################################################
-        out = inputs
+        #Encode the inputs and apply sigmoid
+        coded = self.g(inputs)
+        coded = torch.sigmoid(coded)
+        #Decode the encoded repressentation and apply sigmoid
+        decoded = self.h(coded)
+        out = torch.sigmoid(decoded)
         #####################################################################
         #                       END OF YOUR CODE                            #
         #####################################################################
@@ -113,7 +120,7 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
             nan_mask = np.isnan(train_data[user_id].unsqueeze(0).numpy())
             target[0][nan_mask] = output[0][nan_mask]
 
-            loss = torch.sum((output - target) ** 2.)
+            loss = torch.sum((output - target) ** 2.) + (lamb/2)*(model.get_weight_norm())
             loss.backward()
 
             train_loss += loss.item()
@@ -122,6 +129,7 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
         valid_acc = evaluate(model, zero_train_data, valid_data)
         print("Epoch: {} \tTraining Cost: {:.6f}\t "
               "Valid Acc: {}".format(epoch, train_loss, valid_acc))
+    return valid_acc
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -162,16 +170,36 @@ def main():
     # validation set.                                                   #
     #####################################################################
     # Set model hyperparameters.
-    k = None
-    model = None
+    optimal_k=200
+    optimal_lr = 0.01
+    optimal_epoch = 30
+    optimal_lamb=0.1
+    
+    # create an AutoEncoder class object
+    model = AutoEncoder(train_matrix.shape[1],optimal_k)
+    train(model, optimal_lr, optimal_lamb, train_matrix, zero_train_matrix,valid_data, optimal_epoch)
+    test_acc = evaluate(model,zero_train_matrix, test_data)
+    print('Test accuracy is: {}'.format(test_acc))
+    
+    #Uncomment for Grid-Search
+    '''
+    acc_list = []
+    ks = [10,50,100,200,500]
+    lrs = [1e-4,1e-3,1e-2,1e-1,0.5]
+    #Gridsearch for K and Learning Rate
+    for lr in lrs:
+        for k in ks:
+            model = AutoEncoder(train_matrix.shape[1],k)
+            valid_acc = train(model, lr, lamb, train_matrix, zero_train_matrix,valid_data, epoch)
+            acc_list.append(valid_acc)
 
-    # Set optimization hyperparameters.
-    lr = None
-    num_epoch = None
-    lamb = None
-
-    train(model, lr, lamb, train_matrix, zero_train_matrix,
-          valid_data, num_epoch)
+    n = len(lrs)
+    g = sns.heatmap(np.array(acc_list).reshape(n,n))
+    g.set_xticklabels(ks)
+    g.set_yticklabels(lrs)
+    plt.savefig('lr_ks_gridsearch.png')
+    plt.show()
+    '''
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
