@@ -150,7 +150,7 @@ def irt(data, val_data, lr, iterations):
 
         score = evaluate(data=val_data, theta=theta, beta=beta)
         performance['val_acc_lst'].append(score) #
-        print("NLLK: {} \t Score: {}".format(neg_lld, score))
+        #print("NLLK: {} \t Score: {}".format(neg_lld, score))
         theta, beta = update_theta_beta(data, lr, theta, beta)
 
     # TODO: You may change the return values to achieve what you want.
@@ -189,45 +189,56 @@ def main():
     # code, report the validation and test accuracy.                    #
     #####################################################################
     
-    lrs = [0.001, 0.005, 0.01, 0.05, 0.1]
-    iterations = [50, 100, 250, 500, 1000]
+    tuning_hyperparams = False
 
-    final_thetas = []
-    final_betas = []
-    final_val_acc = []
-    for lr in lrs:
-        for num_iterations in iterations:
-            print(f'Testing model with {lr} learning rate and {num_iterations} iterations...')
-            theta, beta, performance = irt(train_data, val_data, lr, num_iterations)
-            final_thetas.append(theta)
-            final_betas.append(beta)
-            final_val_acc.append(performance['val_acc_lst'][-1])
+    if tuning_hyperparams:
+        # Use gridsearch to tune hyperparams
+        lrs = [0.001, 0.005, 0.01, 0.05, 0.1]
+        iterations = [50, 100, 250, 500, 1000]
 
-    # Plot heatmap of accuracy
-    g = sns.heatmap(np.array(final_val_acc).reshape(5,5))
-    g.set_xticklabels(iterations)
-    g.set_yticklabels(lrs)
-    plt.savefig('irt_gridsearch.png')
-    plt.show()
+        final_thetas = []
+        final_betas = []
+        final_val_acc = []
+        for lr in lrs:
+            for num_iterations in iterations:
+                print(f'Testing model with {lr} learning rate and {num_iterations} iterations...')
+                theta, beta, performance = irt(train_data, val_data, lr, num_iterations)
+                final_thetas.append(theta)
+                final_betas.append(beta)
+                final_val_acc.append(performance['val_acc_lst'][-1])
 
-    # Choose optimal hyperparameters
-    best_lr = lrs[np.argmin(final_val_acc) // 5]
-    best_iter = iterations[np.argmin(final_val_acc) % 5]
-    print(f'Optimal hyperparameters: {best_lr} learning rate with {best_iter} iterations')
+        # Plot heatmap of accuracy
+        g = sns.heatmap(np.array(final_val_acc).reshape(5,5))
+        g.set_xticklabels(iterations)
+        g.set_yticklabels(lrs)
+        plt.savefig('irt_gridsearch.png')
+        plt.show()
+
+        # Choose optimal hyperparameters
+        best_lr = lrs[np.argmax(final_val_acc) // 5]
+        best_iter = iterations[np.argmax(final_val_acc) % 5]
+        print(f'Optimal hyperparameters: {best_lr} learning rate with {best_iter} iterations')
+
+    else:
+        #Optimal hyperparameters: 0.01 learning rate with 500 iterations
+        best_lr = 0.01
+        best_iter = 500
 
     # Report NLLK vs. iteration for both training and validation sets
+    print('Training optimal model...')
     theta, beta, performance = irt(train_data, val_data, best_lr, best_iter)
     plt.plot(np.arange(best_iter), -np.array(performance['train_NLLK']), color='blue', label='Training LLK')
     plt.plot(np.arange(best_iter), -np.array(performance['val_NLLK']), color='orange', label='Validation LLK')  
 
     plt.xlabel('Number of Iterations (t)')
     plt.ylabel('Log-Likelihood (LLK)')
-    plt.legend(loc='upper right')
+    plt.legend(loc='lower right')
     plt.title(
         'Log-Likelihood of Training & Validation\nSets using Item Response Theory Model')
 
     plt.savefig('llk_graph.png')
     plt.show()
+    #TODO - I feel like it would make more sense to plot avg log likelihood
 
     # Report final validation and test accuracies
     val_acc = evaluate(val_data, theta, beta)
@@ -235,7 +246,8 @@ def main():
     print(f'Final Validation Accuracy: {val_acc}')
     print(f'Final Test Accuracy: {test_acc}')
 
-    # Five question as a function of theta
+    # Plot five question as a function of theta
+    theta = np.sort(theta)
     plt.plot(np.arange(len(theta)), sigmoid(theta - beta[0]), color='red', label='j1')
     plt.plot(np.arange(len(theta)), sigmoid(theta - beta[1]), color='orange', label='j2')
     plt.plot(np.arange(len(theta)), sigmoid(theta - beta[2]), color='green', label='j3')
