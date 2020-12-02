@@ -1,4 +1,4 @@
-# TODO figure out a better way to do this
+# TODO figure out a better way to
 if __package__ is None:
     import sys
     from os import path
@@ -56,7 +56,15 @@ def neg_log_likelihood(data, theta, beta):
         lklihoods)) + np.multiply(1-targets, np.log(1-lklihoods))
     # need to test out numeric stability
     # log function may freak if exp(theta_i - beta_j) is close to 0
+    #TODO - make numerically stable
+    """
+    thetas = np.array(theta[data['user_id']])
+    betas = np.array(beta[data['question_id']])
+    targets = np.array(data['is_correct'])
 
+    log_denom = np.log(1 + np.exp(thetas - betas))
+    log_lklihoods = targets * (thetas - betas - log_denom) - (1 - targets) * log_denom
+    """
     log_lklihood = log_lklihoods.sum()
 
     #####################################################################
@@ -92,7 +100,7 @@ def update_theta_beta(data, lr, theta, beta):
     # Subtract lklihoods from targets
     partials = np.array(data['is_correct']) - lklihoods
     # Group by i (user_id) and sum
-    theta = theta - lr * np.bincount(data['user_id'], weights=partials)
+    theta = theta + lr * np.bincount(data['user_id'], weights=partials)
 
     # are more steps needed here?
 
@@ -101,7 +109,7 @@ def update_theta_beta(data, lr, theta, beta):
     # Subtract targets from lklihoods
     partials = lklihoods - np.array(data['is_correct'])
     # Group by j (question_id) and sum
-    beta = beta - lr * np.bincount(data['question_id'], weights=partials)
+    beta = beta + lr * np.bincount(data['question_id'], weights=partials)
 
     #####################################################################
     #                       END OF YOUR CODE                            #
@@ -124,9 +132,9 @@ def irt(data, val_data, lr, iterations):
     """
     # TODO: Initialize theta and beta. 
     # TODO -- (see if this is the best initialization!)
-    theta = np.zeros(len(np.unique(data['user_id'])))
-    beta = np.zeros(len(np.unique(data['question_id'])))
-
+    theta = np.repeat(np.array([10]), len(np.unique(data['user_id'])))
+    beta = np.repeat(np.array([0]), len(np.unique(data['question_id'])))
+    print(theta.shape)
     val_acc_lst = []
 
     for i in range(iterations):
@@ -172,8 +180,9 @@ def main():
     # code, report the validation and test accuracy.                    #
     #####################################################################
     
-    for lr in [0.05]: #[0.001, 0.005, 0.01, 0.05, 0.1, 0.5]:
-        for iterations in [100]: #[50, 100, 250, 500, 750, 1000]:
+    for lr in [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]:
+        for iterations in [50, 100, 250, 500, 750, 1000]:
+            print(f'Testing model with {lr} learning rate and {iterations} iterations...')
             theta, beta, val_acc_lst = irt(train_data, val_data, lr, iterations)
 
 
