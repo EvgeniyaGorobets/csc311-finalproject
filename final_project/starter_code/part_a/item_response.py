@@ -9,6 +9,8 @@ else:
 
 
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 def sigmoid(x):
@@ -134,18 +136,25 @@ def irt(data, val_data, lr, iterations):
     # TODO -- (see if this is the best initialization!)
     theta = np.repeat(np.array([10]), len(np.unique(data['user_id'])))
     beta = np.repeat(np.array([0]), len(np.unique(data['question_id'])))
-    print(theta.shape)
-    val_acc_lst = []
+
+    performance = {
+        'train_NLLK': [],
+        'val_NLLK': [],
+        'val_acc_lst': []
+    }
 
     for i in range(iterations):
         neg_lld = neg_log_likelihood(data, theta=theta, beta=beta)
+        performance['train_NLLK'].append(neg_lld) #
+        performance['val_NLLK'].append(neg_log_likelihood(val_data, theta=theta, beta=beta)) #
+
         score = evaluate(data=val_data, theta=theta, beta=beta)
-        val_acc_lst.append(score)
+        performance['val_acc_lst'].append(score) #
         print("NLLK: {} \t Score: {}".format(neg_lld, score))
         theta, beta = update_theta_beta(data, lr, theta, beta)
 
     # TODO: You may change the return values to achieve what you want.
-    return theta, beta, val_acc_lst
+    return theta, beta, performance #val_acc_lst
 
 
 def evaluate(data, theta, beta):
@@ -180,11 +189,68 @@ def main():
     # code, report the validation and test accuracy.                    #
     #####################################################################
     
-    for lr in [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]:
-        for iterations in [50, 100, 250, 500, 750, 1000]:
-            print(f'Testing model with {lr} learning rate and {iterations} iterations...')
-            theta, beta, val_acc_lst = irt(train_data, val_data, lr, iterations)
+    lrs = [0.001, 0.005, 0.01, 0.05, 0.1]
+    iterations = [50, 100, 250, 500, 1000]
 
+    final_thetas = []
+    final_betas = []
+    final_val_acc = []
+    for lr in lrs:
+        for num_iterations in iterations:
+            print(f'Testing model with {lr} learning rate and {num_iterations} iterations...')
+            theta, beta, performance = irt(train_data, val_data, lr, num_iterations)
+            final_thetas.append(theta)
+            final_betas.append(beta)
+            final_val_acc.append(performance['val_acc_lst'][-1])
+
+    # Plot heatmap of accuracy
+    g = sns.heatmap(np.array(final_val_acc).reshape(5,5))
+    g.set_xticklabels(iterations)
+    g.set_yticklabels(lrs)
+    plt.savefig('irt_gridsearch.png')
+    plt.show()
+
+    # Choose optimal hyperparameters
+    best_lr = lrs[np.argmin(final_val_acc) // 5]
+    best_iter = iterations[np.argmin(final_val_acc) % 5]
+    print(f'Optimal hyperparameters: {best_lr} learning rate with {best_iter} iterations')
+
+    # Report NLLK vs. iteration for both training and validation sets
+    theta, beta, performance = irt(train_data, val_data, best_lr, best_iter)
+    plt.plot(np.arange(best_iter), -np.array(performance['train_NLLK']), color='blue', label='Training LLK')
+    plt.plot(np.arange(best_iter), -np.array(performance['val_NLLK']), color='orange', label='Validation LLK')  
+
+    plt.xlabel('Number of Iterations (t)')
+    plt.ylabel('Log-Likelihood (LLK)')
+    plt.legend(loc='upper right')
+    plt.title(
+        'Log-Likelihood of Training & Validation\nSets using Item Response Theory Model')
+
+    plt.savefig('llk_graph.png')
+    plt.show()
+
+    # Report final validation and test accuracies
+    val_acc = evaluate(val_data, theta, beta)
+    test_acc = evaluate(test_data, theta, beta)
+    print(f'Final Validation Accuracy: {val_acc}')
+    print(f'Final Test Accuracy: {test_acc}')
+
+    # Five question as a function of theta
+    plt.plot(np.arange(len(theta)), sigmoid(theta - beta[0]), color='red', label='j1')
+    plt.plot(np.arange(len(theta)), sigmoid(theta - beta[1]), color='orange', label='j2')
+    plt.plot(np.arange(len(theta)), sigmoid(theta - beta[2]), color='green', label='j3')
+    plt.plot(np.arange(len(theta)), sigmoid(theta - beta[3]), color='blue', label='j4')
+    plt.plot(np.arange(len(theta)), sigmoid(theta - beta[4]), color='purple', label='j5')
+
+    plt.xlabel('Theta (θ_i)')
+    plt.ylabel('Probability of Correct Response (p(c_ij = 1) | θ, β )')
+    plt.legend(loc='upper right')
+    plt.title(
+        'Probability Each Student Has of Correctly Answering 5 Questions')
+
+    plt.savefig('5q_prob_plot.png')
+    plt.show()
+    
 
     #####################################################################
     #                       END OF YOUR CODE                            #
