@@ -187,7 +187,7 @@ def main():
     # code, report the validation and test accuracy.                    #
     #####################################################################
     
-    tuning_hyperparams = True
+    tuning_hyperparams = False
 
     if tuning_hyperparams:
         # Use gridsearch to tune hyperparams
@@ -211,8 +211,6 @@ def main():
         plt.xlabel('Number of Iterations')
         plt.ylabel('Learning Rate (α)')
         plt.title('Validation Accuracy of IRT Model with Different Hyperparameters')
-        #g.set_xticklabels(iterations)
-        #g.set_yticklabels(lrs)
         plt.savefig('irt_gridsearch.png')
         plt.show()
 
