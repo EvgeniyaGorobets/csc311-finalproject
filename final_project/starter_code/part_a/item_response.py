@@ -99,16 +99,14 @@ def update_theta_beta(data, lr, theta, beta):
     
     # Update theta
     lklihoods = likelihoods(data, theta, beta)
-    # Subtract lklihoods from targets
+    # Subtract likelihoods from targets
     partials = np.array(data['is_correct']) - lklihoods
     # Group by i (user_id) and sum
     theta = theta + lr * np.bincount(data['user_id'], weights=partials)
 
-    # are more steps needed here?
-
-    # Update beta using new theta?
+    # Update beta using new theta
     lklihoods = likelihoods(data, theta, beta)
-    # Subtract targets from lklihoods
+    # Subtract targets from likelihoods
     partials = lklihoods - np.array(data['is_correct'])
     # Group by j (question_id) and sum
     beta = beta + lr * np.bincount(data['question_id'], weights=partials)
@@ -189,7 +187,7 @@ def main():
     # code, report the validation and test accuracy.                    #
     #####################################################################
     
-    tuning_hyperparams = False
+    tuning_hyperparams = True
 
     if tuning_hyperparams:
         # Use gridsearch to tune hyperparams
@@ -207,10 +205,14 @@ def main():
                 final_betas.append(beta)
                 final_val_acc.append(performance['val_acc_lst'][-1])
 
+        np.savetxt('IRT_gridsearch_val_accuracies.csv', np.array(final_val_acc), delimiter=",")
         # Plot heatmap of accuracy
-        g = sns.heatmap(np.array(final_val_acc).reshape(5,5))
-        g.set_xticklabels(iterations)
-        g.set_yticklabels(lrs)
+        hmap = sns.heatmap(np.array(final_val_acc).reshape(5,5), xticklabels=iterations, yticklabels=lrs)
+        plt.xlabel('Number of Iterations')
+        plt.ylabel('Learning Rate (α)')
+        plt.title('Validation Accuracy of IRT Model with Different Hyperparameters')
+        #g.set_xticklabels(iterations)
+        #g.set_yticklabels(lrs)
         plt.savefig('irt_gridsearch.png')
         plt.show()
 
@@ -220,11 +222,11 @@ def main():
         print(f'Optimal hyperparameters: {best_lr} learning rate with {best_iter} iterations')
 
     else:
-        #Optimal hyperparameters: 0.01 learning rate with 500 iterations
+        # Optimal hyperparameters: 0.01 learning rate with 500 iterations
         best_lr = 0.01
         best_iter = 500
 
-    # Report NLLK vs. iteration for both training and validation sets
+    # Report LLK vs. iteration for both training and validation sets
     print('Training optimal model...')
     theta, beta, performance = irt(train_data, val_data, best_lr, best_iter)
     plt.plot(np.arange(best_iter), -np.array(performance['train_NLLK']), color='blue', label='Training LLK')
@@ -238,14 +240,39 @@ def main():
 
     plt.savefig('llk_graph.png')
     plt.show()
-    #TODO - I feel like it would make more sense to plot avg log likelihood
 
+    # Plot average log-likelihood vs. iteration for training & validation sets
+    avg_train_LLK = -np.array(performance['train_NLLK']) / len(train_data['user_id'])
+    avg_val_LLK = -np.array(performance['val_NLLK']) / len(val_data['user_id'])
+    plt.plot(np.arange(best_iter), avg_train_LLK, color='blue', label='Average Training LLK')
+    plt.plot(np.arange(best_iter), avg_val_LLK, color='orange', label='Average Validation LLK')  
+
+    plt.xlabel('Number of Iterations (t)')
+    plt.ylabel('Average Log-Likelihood')
+    plt.legend(loc='lower right')
+    plt.title(
+        'Average Log-Likelihood of Training & Validation\nSets using Item Response Theory Model')
+
+    plt.savefig('avg_llk_graph.png')
+    plt.show()    
+
+    #####################################################################
+    #                       END OF YOUR CODE                            #
+    #####################################################################
+
+    #####################################################################
+    # TODO:                                                             #
+    # Implement part (c)                                                #
+    #####################################################################
     # Report final validation and test accuracies
     val_acc = evaluate(val_data, theta, beta)
     test_acc = evaluate(test_data, theta, beta)
     print(f'Final Validation Accuracy: {val_acc}')
     print(f'Final Test Accuracy: {test_acc}')
+    # Final Validation Accuracy: 0.7066045723962744
+    # Final Test Accuracy: 0.7098504092576913
 
+    # Implement part (d)
     # Plot five question as a function of theta
     theta = np.sort(theta)
     plt.plot(np.arange(len(theta)), sigmoid(theta - beta[0]), color='red', label='j1')
@@ -262,21 +289,11 @@ def main():
 
     plt.savefig('5q_prob_plot.png')
     plt.show()
-    
-
-    #####################################################################
-    #                       END OF YOUR CODE                            #
-    #####################################################################
-
-    #####################################################################
-    # TODO:                                                             #
-    # Implement part (c)                                                #
-    #####################################################################
-    pass
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
 
 
 if __name__ == "__main__":
-    main()
+    #main()
+    pass #for now while i figure out imports
