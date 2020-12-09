@@ -6,12 +6,12 @@ import sys
 if os.getcwd()[-6:] == 'part_a':
     # You are running this from 'part_a'
     sys.path.append(os.getcwd()[:-7])
-    from utils import *
+    from utils import load_train_csv, load_public_test_csv, load_train_sparse, load_valid_csv
 
 if os.getcwd()[-12:] == 'starter_code':
     # You are running this from 'starter_code'
     sys.path.append(os.getcwd())
-    from utils import *
+    from utils import load_train_csv, load_public_test_csv, load_train_sparse, load_valid_csv
     os.chdir('part_a')
 
 import numpy as np
