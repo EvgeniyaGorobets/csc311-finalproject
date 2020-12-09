@@ -1,12 +1,18 @@
-# TODO figure out a better way to
-if __package__ is None:
-    import sys
-    from os import path
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from utils import *
-else:
-    from ..utils import *
+import os
+import sys
 
+# TODO - there's a much cleaner way to do this
+# use __file__
+if os.getcwd()[-6:] == 'part_a':
+    # You are running this from 'part_a'
+    sys.path.append(os.getcwd()[:-7])
+    from utils import *
+
+if os.getcwd()[-12:] == 'starter_code':
+    # You are running this from 'starter_code'
+    sys.path.append(os.getcwd())
+    from utils import *
+    os.chdir('part_a')
 
 import numpy as np
 import seaborn as sns
@@ -211,7 +217,7 @@ def main():
         plt.xlabel('Number of Iterations')
         plt.ylabel('Learning Rate (α)')
         plt.title('Validation Accuracy of IRT Model with Different Hyperparameters')
-        plt.savefig('irt_gridsearch.png')
+        plt.savefig('..plots/irt_gridsearch.png')
         plt.show()
 
         # Choose optimal hyperparameters
@@ -236,7 +242,7 @@ def main():
     plt.title(
         'Log-Likelihood of Training & Validation\nSets using Item Response Theory Model')
 
-    plt.savefig('llk_graph.png')
+    plt.savefig('..plots/llk_graph.png')
     plt.show()
 
     # Plot average log-likelihood vs. iteration for training & validation sets
@@ -251,7 +257,7 @@ def main():
     plt.title(
         'Average Log-Likelihood of Training & Validation\nSets using Item Response Theory Model')
 
-    plt.savefig('avg_llk_graph.png')
+    plt.savefig('..plots/avg_llk_graph.png')
     plt.show()    
 
     #####################################################################
@@ -285,7 +291,7 @@ def main():
     plt.title(
         'Probability Each Student Has of Correctly Answering 5 Questions')
 
-    plt.savefig('5q_prob_plot.png')
+    plt.savefig('..plots/5q_prob_plot.png')
     plt.show()
     #####################################################################
     #                       END OF YOUR CODE                            #
@@ -293,5 +299,4 @@ def main():
 
 
 if __name__ == "__main__":
-    #main()
-    pass #for now while i figure out imports
+    main()
