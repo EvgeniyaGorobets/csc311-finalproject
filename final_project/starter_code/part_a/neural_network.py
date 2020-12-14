@@ -28,6 +28,7 @@ def load_data(base_path="data"):
     train_matrix = load_train_sparse(base_path).toarray()
     valid_data = load_valid_csv(base_path)
     test_data = load_public_test_csv(base_path)
+    train_data = load_train_csv(base_path)
 
     zero_train_matrix = train_matrix.copy()
     # Fill in the missing entries to 0.
@@ -36,7 +37,7 @@ def load_data(base_path="data"):
     zero_train_matrix = torch.FloatTensor(zero_train_matrix)
     train_matrix = torch.FloatTensor(train_matrix)
 
-    return zero_train_matrix, train_matrix, valid_data, test_data
+    return zero_train_matrix, train_matrix, train_data, valid_data, test_data
 
 
 class AutoEncoder(nn.Module):
@@ -84,7 +85,7 @@ class AutoEncoder(nn.Module):
         return out
 
 
-def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
+def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch,train_dic):
     """ Train the neural network, where the objective also includes
     a regularizer.
 
@@ -101,7 +102,9 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
     
     # Tell PyTorch you are training the model.
     model.train()
-
+    #Loss lists to return
+    valid_loss_list = []
+    train_loss_list = []
     # Define optimizers and loss function.
     optimizer = optim.SGD(model.parameters(), lr=lr)
     num_student = train_data.shape[0]
@@ -119,6 +122,7 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
             # Mask the target to only compute the gradient of valid entries.
             nan_mask = np.isnan(train_data[user_id].unsqueeze(0).numpy())
             target[0][nan_mask] = output[0][nan_mask]
+            #print(torch.sum((output - target)**2.))
 
             loss = torch.sum((output - target) ** 2.) + (lamb/2)*(model.get_weight_norm())
             loss.backward()
@@ -127,9 +131,14 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch):
             optimizer.step()
 
         valid_acc = evaluate(model, zero_train_data, valid_data)
+        valid_loss = evaluate_loss(model,zero_train_data,valid_data)
+        train_loss = evaluate_loss(model,zero_train_data,train_dic)
+        print(train_loss)
         print("Epoch: {} \tTraining Cost: {:.6f}\t "
-              "Valid Acc: {}".format(epoch, train_loss, valid_acc))
-    return valid_acc
+              "Valid Cost: {}".format(epoch, train_loss, valid_loss))
+        valid_loss_list.append(valid_loss)
+        train_loss_list.append(train_loss)
+    return train_loss_list,valid_loss_list
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -160,9 +169,33 @@ def evaluate(model, train_data, valid_data):
         total += 1
     return correct / float(total)
 
+def evaluate_loss(model, train_data, valid_data):
+    """ Evaluate the valid_data on the current model.
+    Get the validation loss instead of accuracy
+    :param model: Module
+    :param train_data: 2D FloatTensor
+    :param valid_data: A dictionary {user_id: list,
+    question_id: list, is_correct: list}
+    :return: float
+    """
+    # Tell PyTorch you are evaluating the model.
+    model.eval()
+
+    total = 0
+    counter = 0
+    for i, u in enumerate(valid_data["user_id"]):
+        #Get the predicted output for the i'th user in the
+        #list of user id's on the attempted problem 
+        inputs = Variable(train_data[u]).unsqueeze(0)
+        output = model(inputs)
+        target = valid_data["is_correct"][i]
+        guess = output[0][valid_data["question_id"][i]].item()
+        counter += 1
+        total += (guess - target)** 2.
+    return total/counter
 
 def main():
-    zero_train_matrix, train_matrix, valid_data, test_data = load_data()
+    zero_train_matrix, train_matrix, train_data, valid_data, test_data = load_data()
 
     #####################################################################
     # TODO:                                                             #
@@ -177,9 +210,16 @@ def main():
     
     # create an AutoEncoder class object
     model = AutoEncoder(train_matrix.shape[1],optimal_k)
-    train(model, optimal_lr, optimal_lamb, train_matrix, zero_train_matrix,valid_data, optimal_epoch)
+    train_loss,valid_loss = train(model, optimal_lr, optimal_lamb, train_matrix, zero_train_matrix,valid_data, optimal_epoch,train_data)
     test_acc = evaluate(model,zero_train_matrix, test_data)
-    print('Test accuracy is: {}'.format(test_acc))
+    #print('Test accuracy is: {}'.format(test_acc))
+    plt.title('Training Loss vs. Validation Loss over Epochs')
+    plt.plot(train_loss,color='blue',label='Training Loss')
+    plt.plot(valid_loss,color='orange',label='Validation Loss')
+    plt.legend(loc='best')
+    plt.ylabel('Mean Squared Error')
+    plt.xlabel('Epochs')
+    plt.show()
     
     #Uncomment for Grid-Search
     '''
