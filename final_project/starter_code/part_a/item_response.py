@@ -246,7 +246,7 @@ def main():
     plt.title(
         'Average Log-Likelihood of Training & Validation\nSets using Item Response Theory Model')
 
-    plt.savefig('../plots/avg_llk_graph_test.png')
+    plt.savefig('../plots/avg_llk_graph.png')
     plt.show()    
 
     #####################################################################
