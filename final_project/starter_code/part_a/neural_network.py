@@ -133,7 +133,6 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch,tr
         valid_acc = evaluate(model, zero_train_data, valid_data)
         valid_loss = evaluate_loss(model,zero_train_data,valid_data)
         train_loss = evaluate_loss(model,zero_train_data,train_dic)
-        print(train_loss)
         print("Epoch: {} \tTraining Cost: {:.6f}\t "
               "Valid Cost: {}".format(epoch, train_loss, valid_loss))
         valid_loss_list.append(valid_loss)
@@ -212,7 +211,8 @@ def main():
     model = AutoEncoder(train_matrix.shape[1],optimal_k)
     train_loss,valid_loss = train(model, optimal_lr, optimal_lamb, train_matrix, zero_train_matrix,valid_data, optimal_epoch,train_data)
     test_acc = evaluate(model,zero_train_matrix, test_data)
-    #print('Test accuracy is: {}'.format(test_acc))
+    print('Test accuracy is: {}'.format(test_acc))
+    
     plt.title('Training Loss vs. Validation Loss over Epochs')
     plt.plot(train_loss,color='blue',label='Training Loss')
     plt.plot(valid_loss,color='orange',label='Validation Loss')
