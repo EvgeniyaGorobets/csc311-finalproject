@@ -26,6 +26,15 @@ def sigmoid(x):
 
 
 def likelihoods(data, theta, beta):
+    """
+    Compute p(c = 1 | theta, beta) (likelihoods) for each user-question
+    pari in data.
+
+    :param data: A dictionary {user_id: list, question_id: list,
+    is_correct: list}
+    :param theta: Vector
+    :param beta: Vector
+    """
     # Build two vectors, representing theta_i and beta_j for each
     # user-question (i,  j) pair in the dictionary
     thetas = np.array(theta[data['user_id']])
@@ -53,26 +62,14 @@ def neg_log_likelihood(data, theta, beta):
     # Implement the function as described in the docstring.             #
     #####################################################################
 
-    # TODO - add clarifying comment
-    lklihoods = likelihoods(data, theta, beta)
-
-    # These are the targets
-    targets = np.array(data['is_correct'])
-
-    # Compute log likelihood for each (i,j) pair
-    log_lklihoods = np.multiply(targets, np.log(
-        lklihoods)) + np.multiply(1-targets, np.log(1-lklihoods))
-    # need to test out numeric stability
-    # log function may freak if exp(theta_i - beta_j) is close to 0
-    #TODO - make numerically stable
-    """
+    # For each student-question pair (i,j), get theta_i, beta_j, and
+    # the target c_ij
     thetas = np.array(theta[data['user_id']])
     betas = np.array(beta[data['question_id']])
     targets = np.array(data['is_correct'])
 
-    log_denom = np.log(1 + np.exp(thetas - betas))
-    log_lklihoods = targets * (thetas - betas - log_denom) - (1 - targets) * log_denom
-    """
+    # l = sum ( c_ij (theta_i - beta_j) - log(1 + exp(theta_i - beta_j)) )
+    log_lklihoods = targets * (thetas - betas) - np.log(1 + np.exp(thetas - betas))
     log_lklihood = log_lklihoods.sum()
 
     #####################################################################
@@ -138,8 +135,8 @@ def irt(data, val_data, lr, iterations):
     """
     # TODO: Initialize theta and beta. 
     # TODO -- (see if this is the best initialization!)
-    theta = np.repeat(np.array([10]), len(np.unique(data['user_id'])))
-    beta = np.repeat(np.array([0]), len(np.unique(data['question_id'])))
+    theta = np.repeat(np.array([0]), len(np.unique(data['user_id'])))
+    beta = np.repeat(np.array([100]), len(np.unique(data['question_id'])))
 
     performance = {
         'train_NLLK': [],
@@ -242,7 +239,7 @@ def main():
     plt.title(
         'Log-Likelihood of Training & Validation\nSets using Item Response Theory Model')
 
-    plt.savefig('..plots/llk_graph.png')
+    #plt.savefig('..plots/llk_graph.png')
     plt.show()
 
     # Plot average log-likelihood vs. iteration for training & validation sets
@@ -257,7 +254,7 @@ def main():
     plt.title(
         'Average Log-Likelihood of Training & Validation\nSets using Item Response Theory Model')
 
-    plt.savefig('..plots/avg_llk_graph.png')
+    #plt.savefig('..plots/avg_llk_graph.png')
     plt.show()    
 
     #####################################################################
@@ -278,20 +275,20 @@ def main():
 
     # Implement part (d)
     # Plot five question as a function of theta
-    theta = np.sort(theta)
-    plt.plot(np.arange(len(theta)), sigmoid(theta - beta[0]), color='red', label='j1')
-    plt.plot(np.arange(len(theta)), sigmoid(theta - beta[1]), color='orange', label='j2')
-    plt.plot(np.arange(len(theta)), sigmoid(theta - beta[2]), color='green', label='j3')
-    plt.plot(np.arange(len(theta)), sigmoid(theta - beta[3]), color='blue', label='j4')
-    plt.plot(np.arange(len(theta)), sigmoid(theta - beta[4]), color='purple', label='j5')
+    theta_vals = np.arange(-5, 5, 0.01)
+    plt.plot(theta_vals, sigmoid(theta_vals - beta[0]), color='red', label='j1')
+    plt.plot(theta_vals, sigmoid(theta_vals - beta[1]), color='orange', label='j2')
+    plt.plot(theta_vals, sigmoid(theta_vals - beta[2]), color='green', label='j3')
+    plt.plot(theta_vals, sigmoid(theta_vals - beta[3]), color='blue', label='j4')
+    plt.plot(theta_vals, sigmoid(theta_vals - beta[4]), color='purple', label='j5')
 
-    plt.xlabel('Theta (θ_i)')
+    plt.xlabel('Theta')
     plt.ylabel('Probability of Correct Response (p(c_ij = 1) | θ, β )')
-    plt.legend(loc='upper right')
+    plt.legend(loc='best')
     plt.title(
-        'Probability Each Student Has of Correctly Answering 5 Questions')
+        'Probability Correctly Answering 5 Questions Given Student Ability θ')
 
-    plt.savefig('..plots/5q_prob_plot.png')
+    #plt.savefig('..plots/5q_prob_plot.png')
     plt.show()
     #####################################################################
     #                       END OF YOUR CODE                            #
