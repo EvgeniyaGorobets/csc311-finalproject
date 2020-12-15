@@ -213,7 +213,7 @@ def main():
         plt.xlabel('Number of Iterations')
         plt.ylabel('Learning Rate (α)')
         plt.title('Validation Accuracy of IRT Model with Different Hyperparameters')
-        plt.savefig('..plots/irt_gridsearch.png')
+        plt.savefig('../plots/irt_gridsearch.png')
         plt.show()
 
         # Choose optimal hyperparameters
@@ -238,7 +238,7 @@ def main():
     plt.title(
         'Log-Likelihood of Training & Validation\nSets using Item Response Theory Model')
 
-    #plt.savefig('..plots/llk_graph.png')
+    plt.savefig('../plots/llk_graph.png')
     plt.show()
 
     # Plot average log-likelihood vs. iteration for training & validation sets
@@ -253,7 +253,7 @@ def main():
     plt.title(
         'Average Log-Likelihood of Training & Validation\nSets using Item Response Theory Model')
 
-    #plt.savefig('..plots/avg_llk_graph.png')
+    plt.savefig('../plots/avg_llk_graph_test.png')
     plt.show()    
 
     #####################################################################
@@ -276,10 +276,11 @@ def main():
     # Plot five question as a function of theta
     theta_vals = np.arange(-5, 5, 0.01)
     plt.plot(theta_vals, sigmoid(theta_vals - beta[0]), color='red', label='j1')
-    plt.plot(theta_vals, sigmoid(theta_vals - beta[1]), color='orange', label='j2')
-    plt.plot(theta_vals, sigmoid(theta_vals - beta[2]), color='green', label='j3')
-    plt.plot(theta_vals, sigmoid(theta_vals - beta[3]), color='blue', label='j4')
-    plt.plot(theta_vals, sigmoid(theta_vals - beta[4]), color='purple', label='j5')
+    plt.plot(theta_vals, sigmoid(theta_vals - beta[3]), color='orange', label='j2')
+    plt.plot(theta_vals, sigmoid(theta_vals - beta[4]), color='green', label='j3')
+    plt.plot(theta_vals, sigmoid(theta_vals - beta[19]), color='blue', label='j4')
+    plt.plot(theta_vals, sigmoid(theta_vals - beta[21]), color='purple', label='j5')
+
 
     plt.xlabel('Theta')
     plt.ylabel('Probability of Correct Response (p(c_ij = 1) | θ, β )')
@@ -287,7 +288,7 @@ def main():
     plt.title(
         'Probability Correctly Answering 5 Questions Given Student Ability θ')
 
-    #plt.savefig('..plots/5q_prob_plot.png')
+    plt.savefig('../plots/5q_prob_plot.png')
     plt.show()
     #####################################################################
     #                       END OF YOUR CODE                            #
