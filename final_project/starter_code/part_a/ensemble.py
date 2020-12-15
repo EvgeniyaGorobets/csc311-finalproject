@@ -4,7 +4,7 @@ if os.path.dirname(__file__):
     # You are running this from a parent directory (starter_code)
     os.chdir('part_a')
 sys.path.append(os.path.dirname(os.getcwd()))
-from utils import *
+from utils import load_train_csv, load_public_test_csv, load_valid_csv
 import numpy as np
 
 def sigmoid(x):
