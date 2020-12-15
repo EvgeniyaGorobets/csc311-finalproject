@@ -52,7 +52,6 @@ class AutoEncoder(nn.Module):
         super(AutoEncoder, self).__init__()
 
         # Define linear functions.
-        l1 = 800
         self.enc_1 = nn.Linear(num_question, l1)
         self.enc_2  = nn.Linear(l1,k)
         self.dec_1  = nn.Linear(k,l1)
