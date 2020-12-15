@@ -1,19 +1,12 @@
 import os
 import sys
 
-# TODO - there's a much cleaner way to do this
-# use __file__
-if os.getcwd()[-6:] == 'part_a':
-    # You are running this from 'part_a'
-    sys.path.append(os.getcwd()[:-7])
-    from utils import load_train_csv, load_public_test_csv, load_train_sparse, load_valid_csv
-
-if os.getcwd()[-12:] == 'starter_code':
-    # You are running this from 'starter_code'
-    sys.path.append(os.getcwd())
-    from utils import load_train_csv, load_public_test_csv, load_train_sparse, load_valid_csv
+if os.path.dirname(__file__):
+    # You are running this from a parent directory (starter_code)
     os.chdir('part_a')
+sys.path.append(os.path.dirname(os.getcwd()))
 
+from utils import load_train_csv, load_public_test_csv, load_train_sparse, load_valid_csv
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -265,10 +258,13 @@ def main():
     # Implement part (c)                                                #
     #####################################################################
     # Report final validation and test accuracies
+    train_acc = evaluate(train_data, theta, beta)
     val_acc = evaluate(val_data, theta, beta)
     test_acc = evaluate(test_data, theta, beta)
+    print(f'Final Training Accuracy: {train_acc}')
     print(f'Final Validation Accuracy: {val_acc}')
     print(f'Final Test Accuracy: {test_acc}')
+    # Final Training Accuracy: 0.7405094552639007
     # Final Validation Accuracy: 0.7066045723962744
     # Final Test Accuracy: 0.7098504092576913
 
