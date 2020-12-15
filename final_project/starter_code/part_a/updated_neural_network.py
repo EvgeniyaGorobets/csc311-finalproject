@@ -34,7 +34,7 @@ def load_data(base_path="data"):
     # Fill in the missing entries to 0.
     zero_train_matrix[np.isnan(train_matrix)] = 0
     # Change to Float Tensor for PyTorch.
-    if torch.cuda.is_available:
+    if torch.cuda.is_available():
         zero_train_matrix = torch.cuda.FloatTensor(zero_train_matrix)
     else:
         zero_train_matrix = torch.FloatTensor(zero_train_matrix)
@@ -43,7 +43,7 @@ def load_data(base_path="data"):
 
 
 class AutoEncoder(nn.Module):
-    def __init__(self, num_question, k=100):
+    def __init__(self, num_question, l1=800, k=100):
         """ Initialize a class AutoEncoder.
 
         :param num_question: int
@@ -89,16 +89,15 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch,tr
     # Tell PyTorch you are training the model.
     model.train()
     #Loss lists to return
-    valid_loss_list = []
-    train_loss_list = []
+    valid_acc_list = []
+    train_acc_list = []
     # Define optimizers and loss function.
     optimizer = optim.SGD(model.parameters(), lr=lr)
     num_student = train_data.shape[0]
 
     counter = 0
     for epoch in range(0, num_epoch):
-        print('Epoch {}'.format(epoch))
-        train_loss = 0.
+        #print('Epoch {}'.format(epoch))
         for user_id in range(num_student):
             inputs = Variable(zero_train_data[user_id]).unsqueeze(0)
             target = inputs.clone()
@@ -115,19 +114,19 @@ def train(model, lr, lamb, train_data, zero_train_data, valid_data, num_epoch,tr
 
             loss = torch.sum((output - target) ** 2.)
             #loss = F.binary_cross_entropy_with_logits(output,target)
+            #loss = F.binary_cross_entropy(output, target.detach())
             loss.backward()
             optimizer.step()
 
         #Set the number of epochs between train/val evaluation
-        if (counter+1) % 10 == 0:
-            valid_loss,valid_acc = evaluate(model, zero_train_data, valid_data)
-            train_loss,train_acc = evaluate(model,zero_train_data,train_dic)
-            print("Epoch: {} \tTraining Acc: {:.6f}\t "
-                    "Valid Acc: {}".format(epoch, train_acc, valid_acc))
-            valid_loss_list.append(valid_loss)
-            train_loss_list.append(train_loss)
+        valid_loss,valid_acc = evaluate(model, zero_train_data, valid_data)
+        train_loss,train_acc = evaluate(model,zero_train_data,train_dic)
+        print("Epoch: {} \tTraining Acc: {:.6f}\t "
+                "Valid Acc: {}".format(epoch, train_acc, valid_acc))
+        valid_acc_list.append(valid_acc)
+        train_acc_list.append(train_acc)
         counter += 1
-    return train_loss_list,valid_loss_list
+    return train_acc_list,valid_acc_list
 
 def evaluate(model, train_data, valid_data):
     """Compute the MSE and Accuracy on the current model and
@@ -170,28 +169,29 @@ def main():
     optimal_lr = 0.1
     optimal_epoch = 30
     optimal_lamb=0.1
+    optimal_l1 = 800
     
     # create an AutoEncoder class object
-    if torch.cuda.is_available:
+    if torch.cuda.is_available():
         print('Using GPU')
-        model = AutoEncoder(train_matrix.shape[1],optimal_k).cuda()
+        model = AutoEncoder(train_matrix.shape[1],optimal_l1,optimal_k).cuda()
     else:
         print('Using CPU')
-        model = AutoEncoder(train_matrix.shape[1],optimal_k)
+        model = AutoEncoder(train_matrix.shape[1],optimal_l1,optimal_k)
     #train(model, optimal_lr, optimal_lamb, train_matrix, zero_train_matrix,valid_data, optimal_epoch,train_data)
     if TRAIN:
-        train_loss,valid_loss = train(model, optimal_lr, optimal_lamb, train_matrix, zero_train_matrix,valid_data, optimal_epoch,train_data)
+        train_acc,valid_acc = train(model, optimal_lr, optimal_lamb, train_matrix, zero_train_matrix,valid_data, optimal_epoch,train_data)
         _,test_acc = evaluate(model,zero_train_matrix, test_data)
         #Save model if it is better than high score
         if test_acc > HIGH_SCORE:
             print('Ding ding ding! Saving Winner')
             torch.save(model.state_dict(),'bestmodel.pt')
         print('Test accuracy is: {}'.format(test_acc))
-        plt.title('Training Loss vs. Validation Loss over Epochs')
-        plt.plot(train_loss,color='blue',label='Training Loss')
-        plt.plot(valid_loss,color='orange',label='Validation Loss')
+        plt.title('Training Accuracy vs. Validation Accuracy over Epochs')
+        plt.plot(train_acc,color='blue',label='Training Accuracy')
+        plt.plot(valid_acc,color='orange',label='Validation Accuracy')
         plt.legend(loc='best')
-        plt.ylabel('Loss')
+        plt.ylabel('Accuracy')
         plt.xlabel('Epochs')
         plt.show()
     else:
