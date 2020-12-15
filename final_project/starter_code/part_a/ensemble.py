@@ -1,12 +1,10 @@
-# TODO figure out a better way to
-if __package__ is None:
-    import sys
-    from os import path
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from utils import *
-else:
-    from ..utils import *
-
+import os
+import sys
+if os.path.dirname(__file__):
+    # You are running this from a parent directory (starter_code)
+    os.chdir('part_a')
+sys.path.append(os.path.dirname(os.getcwd()))
+from utils import *
 import numpy as np
 
 def sigmoid(x):
@@ -110,6 +108,10 @@ def main():
         bagged = bootstrap(train_data)
         param_list.append(irt(bagged, best_lr, best_iter))
     
+    #Get training bagged predictions and accuracy
+    train_bagged_preds = bagged_predict(train_data,param_list)
+    train_accuracy = evaluate(train_bagged_preds,train_data['is_correct'])
+
     #Get validation bagged predictions and accuracy
     val_bagged_preds = bagged_predict(val_data,param_list)
     val_accuracy = evaluate(val_bagged_preds,val_data['is_correct'])
@@ -117,6 +119,8 @@ def main():
     #Get test bagged predictions and accuracy
     test_bagged_preds = bagged_predict(test_data,param_list)
     test_accuracy = evaluate(test_bagged_preds,test_data['is_correct'])
+
+    print(f'Final Training Accuracy: {train_accuracy}')
     print(f'Final Validation Accuracy: {val_accuracy}')
     print(f'Final Test Accuracy: {test_accuracy}')
     
