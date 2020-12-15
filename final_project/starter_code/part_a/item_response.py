@@ -133,10 +133,9 @@ def irt(data, val_data, lr, iterations):
     :param iterations: int
     :return: (theta, beta, val_acc_lst)
     """
-    # TODO: Initialize theta and beta. 
-    # TODO -- (see if this is the best initialization!)
-    theta = np.repeat(np.array([0]), len(np.unique(data['user_id'])))
-    beta = np.repeat(np.array([100]), len(np.unique(data['question_id'])))
+    # TODO: Initialize theta and beta.
+    theta = np.repeat(np.array([10]), len(np.unique(data['user_id'])))
+    beta = np.repeat(np.array([0]), len(np.unique(data['question_id'])))
 
     performance = {
         'train_NLLK': [],
@@ -146,11 +145,11 @@ def irt(data, val_data, lr, iterations):
 
     for i in range(iterations):
         neg_lld = neg_log_likelihood(data, theta=theta, beta=beta)
-        performance['train_NLLK'].append(neg_lld) #
-        performance['val_NLLK'].append(neg_log_likelihood(val_data, theta=theta, beta=beta)) #
+        performance['train_NLLK'].append(neg_lld)
+        performance['val_NLLK'].append(neg_log_likelihood(val_data, theta=theta, beta=beta))
 
         score = evaluate(data=val_data, theta=theta, beta=beta)
-        performance['val_acc_lst'].append(score) #
+        performance['val_acc_lst'].append(score)
         #print("NLLK: {} \t Score: {}".format(neg_lld, score))
         theta, beta = update_theta_beta(data, lr, theta, beta)
 
